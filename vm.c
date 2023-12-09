@@ -234,19 +234,20 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     mem = kalloc();
     if(mem == 0){
       cprintf("allocuvm out of memory\n");
-      deallocuvm(pgdir, newsz, oldsz);
+      deallocuvm(pgdir, newsz, oldsz);  // Correctly adjust process size on failure
       return 0;
     }
     memset(mem, 0, PGSIZE);
     if(mappages(pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){
       cprintf("allocuvm out of memory (2)\n");
-      deallocuvm(pgdir, newsz, oldsz);
+      deallocuvm(pgdir, newsz, oldsz);  // Correctly adjust process size on failure
       kfree(mem);
       return 0;
     }
   }
-  return newsz;
+  return newsz;  // Return the new size on success
 }
+
 
 // Deallocate user pages to bring the process size from oldsz to
 // newsz.  oldsz and newsz need not be page-aligned, nor does newsz
