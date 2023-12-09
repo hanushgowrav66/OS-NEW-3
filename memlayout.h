@@ -13,3 +13,6 @@
 
 #define V2P_WO(x) ((x) - KERNBASE)    // same as V2P, but without casts
 #define P2V_WO(x) ((x) + KERNBASE)    // same as P2V, but without casts
+#define SMSMP  (0x40000000)  // (n + 3)-th page
+#define DMSMP  (0x40001000)  // (n + 4)-th page
+

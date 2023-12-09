@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int shutdown(void);
 int get_free_frame_cnt(void);
+char* get_shared_page_addr(int type);
 
 // ulib.c
 int stat(char*, struct stat*);

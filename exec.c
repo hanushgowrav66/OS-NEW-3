@@ -60,6 +60,7 @@ exec(char *path, char **argv)
   end_op();
   ip = 0;
 
+
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
@@ -67,6 +68,14 @@ exec(char *path, char **argv)
     goto bad;
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
+
+// Allocate static shared memory page (SMSMP)
+if((sz = allocuvm(pgdir, sz, SMSMP + PGSIZE)) == 0)
+    goto bad;
+
+// Allocate dynamic shared memory page (DMSMP)
+if((sz = allocuvm(pgdir, sz, DMSMP + PGSIZE)) == 0)
+    goto bad;
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {

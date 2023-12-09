@@ -82,6 +82,21 @@ argstr(int n, char **pp)
   return fetchstr(addr, pp);
 }
 
+int sys_get_shared_page_addr(void) {
+    int type;
+    if(argint(0, &type) < 0)
+        return -1;
+
+    switch (type) {
+        case 0: // SMSMP
+            return SMSMP;
+        case 1: // DMSMP
+            return DMSMP;
+        default:
+            return -1;
+    }
+}
+
 extern int sys_chdir(void);
 extern int sys_close(void);
 extern int sys_dup(void);
@@ -129,6 +144,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_shutdown]      sys_shutdown,
 [SYS_get_free_frame_cnt]  sys_get_free_frame_cnt,
+[SYS_get_shared_page_addr] sys_get_shared_page_addr, 
 };
 
 void

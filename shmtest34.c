@@ -3,16 +3,16 @@
  */
 #include "types.h"
 #include "user.h"
+#include "syscall.h"
 
 // ***ATTETION***: The following stub function needs to be commented out 
 //                 before testing your implementation.
-#define STUB_FUNC
-#ifdef STUB_FUNC
-char * get_shared_page_addr(int type)
-{
-	return 0;
-}
-#endif
+//#define STUB_FUNC
+//#ifdef STUB_FUNC
+//char* get_shared_page_addr(int type) {
+//    return (char*)syscall(SYS_get_shared_page_addr, type);
+//}
+//#endif
 
 #define PGSIZE 4096
 
