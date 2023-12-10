@@ -51,9 +51,7 @@ TOOLPREFIX := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/d
 endif
 
 # If the makefile can't find QEMU, specify its path here
-# Yifan: The following customized qemu binary is needed if the system qemu binary does not support "nographic" option.
-#        "nographic" option is used for the "qemu-nox" target. An alternatie to "nographic" is "curses".
-#QEMU = ~zhangy/fs/bin/qemu-system-i386
+# QEMU = qemu-system-i386
 
 # Try to infer the correct QEMU
 ifndef QEMU
@@ -78,14 +76,21 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -Warray-bounds -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
-#CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -fvar-tracking -fvar-tracking-assignments -O0 -g -Wall -MD -gdwarf-2 -m32 -Werror -fno-omit-frame-pointer
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
-xv6.img: bootblock kernel fs.img
+# Disable PIE when possible (for Ubuntu 16.10 toolchain)
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
+CFLAGS += -fno-pie -no-pie
+endif
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
+CFLAGS += -fno-pie -nopie
+endif
+
+xv6.img: bootblock kernel
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=bootblock of=xv6.img conv=notrunc
 	dd if=kernel of=xv6.img seek=1 conv=notrunc
@@ -136,7 +141,7 @@ tags: $(OBJS) entryother.S _init
 	etags *.S *.c
 
 vectors.S: vectors.pl
-	perl vectors.pl > vectors.S
+	./vectors.pl > vectors.S
 
 ULIB = ulib.o usys.o printf.o umalloc.o
 
@@ -176,10 +181,6 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_shutdown\
-	_shmtest12\
-	_shmtest34\
-	_shmtest56\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -189,8 +190,8 @@ fs.img: mkfs README $(UPROGS)
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel xv6.img fs.img kernelmemfs mkfs \
-	.gdbinit \
+	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
+	xv6memfs.img mkfs .gdbinit \
 	$(UPROGS)
 
 # make a printout
@@ -216,8 +217,7 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-# CPUS := 2
-CPUS := 1
+CPUS := 2
 endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 

@@ -326,21 +326,16 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   
-  int ran = 0; // CS 350/550: to solve the 100%-CPU-utilization-when-idling problem
-  
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    ran = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
-      ran = 1;
-      
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
@@ -357,9 +352,6 @@ scheduler(void)
     }
     release(&ptable.lock);
 
-    if (ran == 0){
-        halt();
-    }
   }
 }
 
